@@ -1,0 +1,83 @@
+{
+    "project": {
+        "name": "OG Sipariş Yönetim Sistemi",
+        "domain": "ogsiparis.com",
+        "version": "1.0.0",
+        "description": "Baklava üretim ve sipariş yönetim sistemi"
+    },
+    "cyberpanel": {
+        "requirements": {
+            "nodejs": "18+",
+            "npm": "9+",
+            "pm2": "latest",
+            "database": "PostgreSQL 13+"
+        },
+        "directories": {
+            "public_html": "/home/ogsiparis.com/public_html",
+            "backend": "/home/ogsiparis.com/public_html/backend",
+            "frontend": "/home/ogsiparis.com/public_html/frontend/dist",
+            "uploads": "/home/ogsiparis.com/public_html/backend/uploads",
+            "logs": "/home/ogsiparis.com/public_html/backend/logs"
+        },
+        "environment": {
+            "NODE_ENV": "production",
+            "PORT": "8080",
+            "DOMAIN": "ogsiparis.com"
+        },
+        "database": {
+            "type": "postgresql",
+            "host": "localhost",
+            "port": "5432",
+            "name": "ogformdb",
+            "username": "ogform",
+            "password": "secret",
+            "encoding": "UTF8",
+            "timezone": "Europe/Istanbul"
+        },
+        "ssl": {
+            "required": true,
+            "auto_redirect": true,
+            "provider": "letsencrypt"
+        },
+        "pm2": {
+            "app_name": "og-backend",
+            "instances": 1,
+            "exec_mode": "fork",
+            "memory_limit": "512M"
+        }
+    },
+    "deployment_steps": [
+        "1. CyberPanel'de ogsiparis.com website oluştur",
+        "2. PostgreSQL database oluştur: ogformdb",
+        "3. Database user oluştur: ogform/secret",
+        "4. Dosyaları /home/ogsiparis.com/public_html'e upload et",
+        "5. .env.production dosyasını .env olarak kopyala",
+        "6. Dependencies yükle: npm run install:all",
+        "7. Build yap: npm run build",
+        "8. Database migrate: npx prisma db push",
+        "9. PM2 ile başlat: pm2 start ecosystem.config.js",
+        "10. SSL sertifikası aktifleştir (Let's Encrypt)",
+        "11. Domain'i test et: https://ogsiparis.com"
+    ],
+    "test_urls": {
+        "frontend": "https://ogsiparis.com",
+        "api_health": "https://ogsiparis.com/api/dropdown",
+        "recipe_cost": "https://ogsiparis.com/api/receteler/maliyet?recipeId=1&miktar=1000",
+        "login": "https://ogsiparis.com/api/auth/login"
+    },
+    "expected_results": {
+        "recipe_cost_peynirli": "15.01₺",
+        "total_products": 38,
+        "total_recipes": 13,
+        "database_tables": [
+            "User",
+            "Product",
+            "Recipe",
+            "RecipeIngredient",
+            "Order",
+            "OrderItem",
+            "Price",
+            "Category"
+        ]
+    }
+}

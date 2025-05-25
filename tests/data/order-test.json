@@ -1,0 +1,18 @@
+{
+    "tarih": "2025-05-23",
+    "teslimatTuruId": 1,
+    "gonderenAdi": "Test Kullanıcı",
+    "gonderenTel": "5551234567",
+    "aliciAdi": "Test Alıcı",
+    "aliciTel": "5551234568",
+    "adres": "Test Adres",
+    "aciklama": "Real-time test siparişi",
+    "siparisler": [
+        {
+            "ambalajId": 1,
+            "urunId": 1,
+            "miktar": 500,
+            "birim": "Gram"
+        }
+    ]
+}
