@@ -1,0 +1,58 @@
+name: Deploy Frontend and Backend
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Install SSH Key
+      uses: shimataro/ssh-key-action@v2
+      with:
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
+        if_key_exists: replace
+        
+    - name: Deploy Frontend
+      run: |
+        # Install dependencies
+        cd frontend
+        npm install
+        
+        # Build frontend
+        npm run build
+        
+        # Deploy frontend
+        rsync -avz --delete dist/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/ogsiparis.com/
+        
+    - name: Deploy Backend
+      run: |
+        # Install dependencies
+        cd backend
+        npm install
+        
+        # Create .env file
+        cat > .env << EOL
+        PORT=3000
+        MONGODB_URI=${{ secrets.MONGODB_URI }}
+        JWT_SECRET=${{ secrets.JWT_SECRET }}
+        NODE_ENV=production
+        EOL
+        
+        # Deploy backend
+        rsync -avz --delete . ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/ogsiparis.com/backend/
+        
+    - name: Restart Backend Service
+      run: |
+        ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'cd /var/www/ogsiparis.com/backend && pm2 restart og-siparis || pm2 start npm --name "og-siparis" -- start' 

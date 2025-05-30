@@ -1,0 +1,74 @@
+name: Frontend Deployment
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Install Dependencies
+      run: npm ci
+      
+    - name: Build
+      run: npm run build
+      env:
+        VITE_API_BASE_URL: https://ogsiparis.com:3000/api
+        
+    - name: Deploy to Production
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USERNAME }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          cd /home/ogsiparis.com/public_html
+          rm -rf backup_old
+          mkdir backup_old
+          mv * backup_old/ 2>/dev/null
+          
+          # Create temp directory and clone
+          mkdir -p temp
+          cd temp
+          git clone https://github.com/MehmetEminSelek/ogFrontend.git .
+          
+          # Build
+          npm install
+          npm run build
+          
+          # Move files
+          cp -r dist/* /home/ogsiparis.com/public_html/
+          cd /home/ogsiparis.com/public_html
+          rm -rf temp
+          
+          # Update index.html
+          JS_FILE=$(ls assets/ | grep -E "index-.*\.js$" | head -1)
+          CSS_FILE=$(ls assets/ | grep -E "index-.*\.css$" | head -1)
+          
+          cat > index.html << HTML
+          <!DOCTYPE html>
+          <html lang="tr">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Ömer Güllü Sistemi - Baklavacı Yönetim Paneli</title>
+              <meta name="description" content="Ömer Güllü Baklavacı İşletmesi - Modern Sipariş ve Stok Yönetim Sistemi">
+              <link rel="icon" type="image/x-icon" href="/favicon.ico">
+              <script type="module" crossorigin src="/assets/$JS_FILE"></script>
+              <link rel="stylesheet" crossorigin href="/assets/$CSS_FILE">
+          </head>
+          <body>
+              <div id="app"></div>
+          </body>
+          </html>
+          HTML 
