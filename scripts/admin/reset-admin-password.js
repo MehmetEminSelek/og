@@ -13,13 +13,13 @@ async function resetAdminPassword() {
         // Mevcut admin kullanıcıları listele
         const adminUsers = await prisma.user.findMany({
             where: {
-                role: 'admin'
+                rol: 'GENEL_MUDUR'
             },
             select: {
                 id: true,
                 ad: true,
                 email: true,
-                role: true,
+                rol: true,
                 createdAt: true
             }
         });
@@ -35,10 +35,15 @@ async function resetAdminPassword() {
             const newAdmin = await prisma.user.create({
                 data: {
                     ad: 'Admin',
+                    soyad: 'Yönetici',
                     email: 'admin@og.com',
-                    passwordHash: hashedPassword,
-                    role: 'admin',
-                    erpPasifAktif: true
+                    username: 'admin',
+                    password: hashedPassword,
+                    rol: 'GENEL_MUDUR',
+                    aktif: true,
+                    gunlukUcret: 0,
+                    sgkDurumu: 'VAR',
+                    girisYili: new Date().getFullYear()
                 }
             });
 
@@ -47,7 +52,7 @@ async function resetAdminPassword() {
             console.log(`   Ad: ${newAdmin.ad}`);
             console.log(`   Email: ${newAdmin.email}`);
             console.log(`   Şifre: ${newPassword}`);
-            console.log(`   Role: ${newAdmin.role}\n`);
+            console.log(`   Rol: ${newAdmin.rol}\n`);
 
         } else {
             console.log('👥 Mevcut admin kullanıcıları:');
@@ -63,7 +68,7 @@ async function resetAdminPassword() {
 
             await prisma.user.update({
                 where: { id: targetUser.id },
-                data: { passwordHash: hashedPassword }
+                data: { password: hashedPassword }
             });
 
             console.log('✅ Şifre başarıyla sıfırlandı:');
@@ -89,7 +94,7 @@ async function setCustomPassword(userId, newPassword) {
 
         await prisma.user.update({
             where: { id: userId },
-            data: { passwordHash: hashedPassword }
+            data: { password: hashedPassword }
         });
 
         console.log(`✅ Kullanıcı ${userId} için şifre güncellendi: ${newPassword}`);
@@ -106,7 +111,7 @@ if (require.main === module) {
         const [, password] = args;
         console.log('🔐 Özel şifre belirleniyor...');
         // İlk admin kullanıcı için özel şifre
-        prisma.user.findFirst({ where: { role: 'admin' } })
+        prisma.user.findFirst({ where: { rol: 'GENEL_MUDUR' } })
             .then(user => {
                 if (user) {
                     return setCustomPassword(user.id, password);
